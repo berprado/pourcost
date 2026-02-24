@@ -70,36 +70,7 @@
   </style>
 </head>
 <body>
-<div id="app">
-  <template v-if="!auth.token">
-    <login-form @logged-in="onLogin" />
-  </template>
-  <template v-else>
-    <header>
-      <h1>🍹 PourCost — BackStage Bar</h1>
-      <span class="user">{{ auth.user?.nombres }} {{ auth.user?.paterno }}</span>
-      <button class="logout btn btn-sm" @click="logout">Salir</button>
-    </header>
-    <main>
-      <cocktail-list
-        v-if="view === 'list'"
-        @select="openDetail"
-      />
-      <cocktail-detail
-        v-else-if="view === 'detail'"
-        :cocktail-id="selectedId"
-        @back="view = 'list'"
-        @show-pourcost="openPourCost"
-      />
-      <pour-cost-panel
-        v-else-if="view === 'pourcost'"
-        :cocktail-id="selectedId"
-        :optional-id="selectedOptionalId"
-        @back="view = 'detail'"
-      />
-    </main>
-  </template>
-</div>
+<div id="app"></div>
 
 <script type="module" src="api.js"></script>
 <script type="module" src="components/LoginForm.js"></script>
