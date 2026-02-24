@@ -1,0 +1,18 @@
+# Entorno Python
+backend/venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/**/*.pyc
+backend/.env
+
+# Dependencias Node (MCP)
+node_modules/
+
+# Editor
+.vscode/settings.json
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
