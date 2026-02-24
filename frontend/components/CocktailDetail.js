@@ -36,12 +36,37 @@ window.CocktailDetail = {
       });
     }
 
+    /**
+     * Muestra la cantidad del ingrediente en la receta.
+     * - Detalle: "1,5 Oz."  (fracción de la unidad base)
+     * - Unidad:  "1 unidad (750 ml)"  (la unidad base completa con su volumen físico)
+     */
     function fmtCantidad(ing) {
+      if (ing.tipo_cantidad_combo === 'Unidad') {
+        const medida = ing.medida_unidad_base != null
+          ? `${ing.medida_unidad_base} ${ing.unidad_base}`
+          : ing.unidad_base;
+        return `${ing.cantidad_receta} unidad (${medida})`;
+      }
       return `${ing.cantidad_receta} ${ing.unidad_detalle}`;
     }
 
+    /**
+     * Muestra la unidad base del ingrediente de forma descriptiva.
+     * - Detalle: "ml"  (unidad base de la cual se extrae la fracción)
+     * - Unidad:  "750 ml"  (volumen total de la unidad base completa)
+     */
+    function fmtUnidadBase(ing) {
+      if (ing.tipo_cantidad_combo === 'Unidad') {
+        return ing.medida_unidad_base != null
+          ? `${ing.medida_unidad_base} ${ing.unidad_base}`
+          : ing.unidad_base;
+      }
+      return ing.unidad_base;
+    }
+
     const fmtBs = window.fmtBs;
-    return { cocktail, selectedOptional, loading, error, verPourCost, fmtCantidad, fmtBs };
+    return { cocktail, selectedOptional, loading, error, verPourCost, fmtCantidad, fmtUnidadBase, fmtBs };
   },
   template: `
     <div>
@@ -73,7 +98,7 @@ window.CocktailDetail = {
               <tr v-for="ing in cocktail.principales" :key="ing.id_producto">
                 <td>{{ ing.nombre_producto }}</td>
                 <td>{{ fmtCantidad(ing) }}</td>
-                <td class="text-muted">{{ ing.unidad_base }}</td>
+                <td class="text-muted">{{ fmtUnidadBase(ing) }}</td>
                 <td>
                   <span v-if="ing.sin_wac" class="badge badge-warn" title="Sin WAC registrado">⚠ Sin costo</span>
                 </td>

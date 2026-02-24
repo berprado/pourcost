@@ -19,6 +19,7 @@ class Ingredient(BaseModel):
     tipo_cantidad_combo: str
     tipo_parte_combo: str
     unidad_base: str
+    medida_unidad_base: Optional[float]          # NUEVO: volumen físico (ej: 750)
     unidades_detalle_por_base: float
     unidad_detalle: str
     wac_actual: float
@@ -41,6 +42,9 @@ class IngredientPourCost(BaseModel):
     id_producto: int
     nombre_producto: str
     cantidad_receta: float
+    tipo_cantidad_combo: str                     # NUEVO: necesario para fmtCantidad en frontend
+    unidad_base: str                             # NUEVO: necesario para fmtCantidad en frontend
+    medida_unidad_base: Optional[float]          # NUEVO: volumen físico (ej: 750)
     unidad_detalle: str
     wac_actual: float
     cantidad_unidad_base: float

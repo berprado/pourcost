@@ -35,6 +35,21 @@ window.PourCostPanel = {
       return "badge-danger";
     });
 
+    /**
+     * Muestra la cantidad del ingrediente consistente con CocktailDetail:
+     * - Detalle: "1,5 Oz."
+     * - Unidad:  "1 unidad (750 ml)"
+     */
+    function fmtCantidad(ing) {
+      if (ing.tipo_cantidad_combo === 'Unidad') {
+        const medida = ing.medida_unidad_base != null
+          ? `${ing.medida_unidad_base} ${ing.unidad_base}`
+          : ing.unidad_base;
+        return `${ing.cantidad_receta} unidad (${medida})`;
+      }
+      return `${ing.cantidad_receta} ${ing.unidad_detalle}`;
+    }
+
     const bs = window.fmtBs;
     const pct = window.fmtPct;
     function frac(v) {
@@ -42,7 +57,7 @@ window.PourCostPanel = {
       return new Intl.NumberFormat('es-BO', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(v);
     }
 
-    return { result, loading, error, pourCostClass, pct, bs, frac };
+    return { result, loading, error, pourCostClass, pct, bs, frac, fmtCantidad };
   },
   template: `
     <div>
@@ -79,7 +94,7 @@ window.PourCostPanel = {
                   {{ ing.nombre_producto }}
                   <span v-if="ing.sin_wac" class="badge badge-warn" style="margin-left:.4rem">⚠ Sin WAC</span>
                 </td>
-                <td class="text-right text-muted">{{ ing.cantidad_receta }} {{ ing.unidad_detalle }}</td>
+                <td class="text-right text-muted">{{ fmtCantidad(ing) }}</td>
                 <td class="text-right">{{ bs(ing.wac_actual) }}</td>
                 <td class="text-right text-muted">{{ frac(ing.cantidad_unidad_base) }}</td>
                 <td class="text-right text-gold">{{ ing.sin_wac ? '—' : bs(ing.cogs_ingrediente) }}</td>

@@ -252,11 +252,12 @@ hash_match     = hashlib.sha256(password.encode()).hexdigest() == contrasena_bd
 | GET | `/products/no-wac` | Productos sin WAC (bonificaciones/nuevos) | Sí |
 | GET | `/products/{id}/wac` | WAC actual de un producto | Sí |
 
-### Simulaciones (todo en memoria, sin persistencia)
+### Simulaciones
 | Método | Endpoint | Descripción | Auth |
 |---|---|---|---|
-| POST | `/simulate/express` | Modifica WAC y/o cantidades de ingredientes existentes. Recalcula COGS/margen/pour cost | Sí |
-| POST | `/simulate/substitution` | Sustituye ingredientes por otros productos de la BD. Usa WAC real del producto elegido | Sí |
+| POST | `/simulate/substitution` | Recibe un `id_producto` sustituto y devuelve su WAC real. El cálculo final ocurre en el frontend. | Sí |
+
+> ⚠️ **No existe `/simulate/express`** — la simulación express es 100% local en Vue. El único endpoint de simulación es `/simulate/substitution`, y su único propósito es devolver el WAC real de un producto sustituto desde la BD.
 
 ### Cócteles creados en app
 | Método | Endpoint | Auth |
@@ -336,16 +337,36 @@ pourcost-app/
 
 ## Módulo de simulación
 
-### Simulación Express
-- **Propósito**: ¿Qué pasa si el WAC de este ingrediente cambia? ¿O si uso menos cantidad?
-- **Inputs**: tabla editable con WAC y cantidad por ingrediente (pre-poblada con valores reales)
-- **Output**: recalculo inmediato de COGS, margen, pour cost — **sin guardar en BD**
-- **Permite**: ingresar WAC manual para ingredientes sin WAC (para poder completar la simulación)
+### Simulación Express — 100% frontend, cero requests al backend
 
-### Simulación por Sustitución
-- **Propósito**: ¿Qué pasa si cambio este ingrediente por otro producto?
+> ⚠️ **ARQUITECTURA CRÍTICA**: La simulación express **nunca llama al backend**. Todo el cálculo ocurre en Vue con los datos que ya están en memoria desde que se cargó el pour cost real.
+
+- **Propósito**: ¿Qué pasa si el WAC de este ingrediente cambia? ¿O si uso menos cantidad?
+- **Inputs**: tabla editable con WAC y cantidad por ingrediente (pre-poblada con valores reales del backend)
+- **Cálculo**: Vue recalcula COGS/margen/pour cost de forma reactiva en cada cambio — sin debounce, sin fetch, sin POST
+- **Fórmula aplicada en frontend**:
+  ```js
+  // Para cada ingrediente:
+  const fraccion = ing.tipo_cantidad_combo === 'Unidad'
+    ? ing.cantidad_sim
+    : ing.cantidad_sim / ing.unidades_detalle_por_base
+  ing.cogs_sim = fraccion * ing.wac_sim
+
+  // Totales reactivos (computed):
+  const cogs_total = ingredientes.reduce((s, i) => s + i.cogs_sim, 0)
+  const margen     = precio_venta - cogs_total
+  const pour_cost  = cogs_total / precio_venta
+  ```
+- **Permite**: ingresar WAC manual para ingredientes con sin_wac=1 para completar la simulación
+- **El endpoint `/simulate/express` NO existe** — fue eliminado de la arquitectura. No crearlo.
+
+### Simulación por Sustitución — POST al backend solo al cambiar ingrediente
+
+- **Propósito**: ¿Qué pasa si cambio este ingrediente por otro producto de la BD?
 - **Inputs**: para cada ingrediente, desplegable de productos disponibles en BD (con su WAC real)
-- **Output**: recalculo inmediato con WAC real del producto seleccionado — **sin guardar en BD**
+- **Flujo**: usuario selecciona producto → POST a `/simulate/substitution` con debounce 400ms → backend devuelve WAC real → Vue recalcula localmente
+- **Output**: recalculo reactivo con WAC real del producto elegido — **sin guardar en BD**
+- **El POST solo sirve para obtener el WAC del producto sustituto** — el cálculo final sigue siendo local en Vue
 
 ---
 
@@ -360,9 +381,10 @@ pourcost-app/
 6. Drill-down completo funcional
 
 ### Fase 2 — Simulaciones
-1. Backend: `simulate.py` router con lógica en `cogs_calculator.py`
-2. Frontend: `SimulatorExpress.js`, `SimulatorSubst.js`
-3. Manejo visual completo de ingredientes sin WAC
+1. Frontend: `SimulatorExpress.js` — tabla editable reactiva, cálculo 100% local en Vue, sin requests al backend
+2. Backend: `simulate.py` router — único endpoint `POST /simulate/substitution` que devuelve el WAC real de un producto sustituto
+3. Frontend: `SimulatorSubst.js` — desplegable de productos, POST al backend solo para obtener WAC, recálculo local
+4. Manejo visual completo de ingredientes sin WAC en ambos modos
 
 ### Fase 3 — App Cocktails
 1. Backend: router `app_cocktails.py` con CRUD completo
@@ -456,62 +478,12 @@ python-dotenv
 DB_HOST=localhost
 DB_PORT=3306
 DB_USER=root
-DB_PASSWORD=admin123.
-DB_NAME=adminerp_wac
+DB_PASSWORD=
+DB_NAME=adminerp
 JWT_SECRET=cambiar_en_produccion
 JWT_EXPIRE_HOURS=8
 ID_ALMACEN=1
 ```
-
----
-
-## MCP MySQL — Configuración para Claude Code
-
-El proyecto usa el MCP `@benborla29/mcp-server-mysql` para que Claude Code pueda consultar la base de datos directamente durante el desarrollo.
-
-### Requisitos previos
-- Node.js instalado (verificar con `node --version`)
-- WAMP corriendo con MySQL activo
-- VS Code con la extensión Claude Code
-
-### Instalación correcta
-
-**Paso 1 — Crear `.mcp.json` en la raíz del proyecto** (este archivo ya existe en el repo):
-
-```json
-{
-  "mcpServers": {
-    "mysql": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["-y", "@benborla29/mcp-server-mysql"],
-      "env": {
-        "MYSQL_HOST": "localhost",
-        "MYSQL_PORT": "3306",
-        "MYSQL_USER": "root",
-        "MYSQL_PASS": "admin123.",
-        "MYSQL_DB": "adminerp_wac"
-      }
-    }
-  }
-}
-```
-
-**Paso 2 — Reiniciar VS Code** para que la extensión detecte el nuevo MCP.
-
-**Paso 3 — Aprobar el MCP** cuando VS Code muestre el prompt de confianza.
-
-### Problemas conocidos y cómo evitarlos
-
-| Problema | Causa | Solución |
-|---|---|---|
-| MCP no aparece tras reiniciar | `claude mcp add` guarda la config bajo la clave con barras normales (`C:/wamp/...`) pero Windows usa barras invertidas (`C:\wamp\...`), por lo que Claude Code no la encuentra | **No usar `claude mcp add`**. Usar siempre el archivo `.mcp.json` en la raíz del proyecto |
-| "Server not found" en `ListMcpResourcesTool` | La sesión de VS Code no recargó la config | Cerrar VS Code completamente y volver a abrirlo |
-| El paquete tarda en cargar la primera vez | `npx` descarga `@benborla29/mcp-server-mysql` (~5MB) al primer uso | Normal. Solo ocurre una vez; queda en caché de npm |
-
-### Verificar que funciona
-
-Claude Code debería poder ejecutar queries como `SHOW TABLES` y ver las tablas de `adminerp_wac`. Si responde "Server not found", revisar los problemas conocidos arriba.
 
 ---
 

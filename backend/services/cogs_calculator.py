@@ -25,6 +25,9 @@ def calcular_pourcost(
             id_producto=ing["id_producto"],
             nombre_producto=ing["nombre_producto"],
             cantidad_receta=float(ing["cantidad_receta"]),
+            tipo_cantidad_combo=ing["tipo_cantidad_combo"],             # NUEVO
+            unidad_base=ing["unidad_base"],                             # NUEVO
+            medida_unidad_base=float(ing["medida_unidad_base"]) if ing.get("medida_unidad_base") is not None else None,  # NUEVO
             unidad_detalle=ing["unidad_detalle"],
             wac_actual=float(ing["wac_actual"]),
             cantidad_unidad_base=float(ing["cantidad_unidad_base"]),
