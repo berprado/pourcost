@@ -35,10 +35,14 @@ window.PourCostPanel = {
       return "badge-danger";
     });
 
-    function pct(v) { return v ? (v * 100).toFixed(1) + "%" : "—"; }
-    function bs(v) { return v != null ? v.toFixed(2) + " Bs" : "—"; }
+    const bs = window.fmtBs;
+    const pct = window.fmtPct;
+    function frac(v) {
+      if (v == null) return "—";
+      return new Intl.NumberFormat('es-BO', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(v);
+    }
 
-    return { result, loading, error, pourCostClass, pct, bs };
+    return { result, loading, error, pourCostClass, pct, bs, frac };
   },
   template: `
     <div>
@@ -77,7 +81,7 @@ window.PourCostPanel = {
                 </td>
                 <td class="text-right text-muted">{{ ing.cantidad_receta }} {{ ing.unidad_detalle }}</td>
                 <td class="text-right">{{ bs(ing.wac_actual) }}</td>
-                <td class="text-right text-muted">{{ ing.cantidad_unidad_base.toFixed(4) }}</td>
+                <td class="text-right text-muted">{{ frac(ing.cantidad_unidad_base) }}</td>
                 <td class="text-right text-gold">{{ ing.sin_wac ? '—' : bs(ing.cogs_ingrediente) }}</td>
               </tr>
             </tbody>

@@ -1,5 +1,18 @@
 const API_BASE = "http://localhost:8000";
 
+// Locale Bolivia: Bs 1.234,56
+const LOCALE = 'es-BO';
+
+export function fmtBs(v) {
+  if (v == null) return "—";
+  return "Bs " + new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+}
+
+export function fmtPct(v) {
+  if (!v) return "—";
+  return new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v * 100) + "%";
+}
+
 // Token en memoria — nunca en localStorage
 window._token = null;
 
@@ -29,3 +42,5 @@ export async function api(path, options = {}) {
 window.api = api;
 window.setToken = setToken;
 window.clearToken = clearToken;
+window.fmtBs = fmtBs;
+window.fmtPct = fmtPct;

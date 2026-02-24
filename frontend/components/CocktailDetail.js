@@ -40,7 +40,8 @@ window.CocktailDetail = {
       return `${ing.cantidad_receta} ${ing.unidad_detalle}`;
     }
 
-    return { cocktail, selectedOptional, loading, error, verPourCost, fmtCantidad };
+    const fmtBs = window.fmtBs;
+    return { cocktail, selectedOptional, loading, error, verPourCost, fmtCantidad, fmtBs };
   },
   template: `
     <div>
@@ -52,7 +53,7 @@ window.CocktailDetail = {
         <div class="flex items-center justify-between mb-3">
           <div>
             <h2 style="font-size:1.2rem;font-weight:600">{{ cocktail.nombre_combo }}</h2>
-            <span class="text-muted">{{ cocktail.nombre_categoria_combo }} · Precio: <span class="text-gold">{{ cocktail.precio_venta ? cocktail.precio_venta.toFixed(2) + ' Bs' : '—' }}</span></span>
+            <span class="text-muted">{{ cocktail.nombre_categoria_combo }} · Precio: <span class="text-gold">{{ fmtBs(cocktail.precio_venta) }}</span></span>
           </div>
         </div>
 

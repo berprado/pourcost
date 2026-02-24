@@ -2,7 +2,7 @@ const { ref, computed, onMounted } = Vue;
 
 window.CocktailList = {
   emits: ["select"],
-  setup(_, { emit }) {
+  setup(_) {
     const cocktails = ref([]);
     const categories = ref([]);
     const search = ref("");
@@ -33,12 +33,8 @@ window.CocktailList = {
       return list;
     });
 
-    function pourCostColor(precio) {
-      if (!precio) return "";
-      return "";
-    }
-
-    return { cocktails, categories, search, filterCat, loading, error, filtered };
+    const fmtBs = window.fmtBs;
+    return { cocktails, categories, search, filterCat, loading, error, filtered, fmtBs };
   },
   template: `
     <div>
@@ -78,7 +74,7 @@ window.CocktailList = {
               <td class="text-muted">{{ c.codigo_combo }}</td>
               <td>{{ c.nombre_combo }}</td>
               <td><span class="badge badge-ok">{{ c.nombre_categoria_combo }}</span></td>
-              <td class="text-right text-gold">{{ c.precio_venta ? c.precio_venta.toFixed(2) + ' Bs' : '—' }}</td>
+              <td class="text-right text-gold">{{ fmtBs(c.precio_venta) }}</td>
             </tr>
           </tbody>
         </table>
